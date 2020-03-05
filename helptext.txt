@@ -1,0 +1,27 @@
+VU Office Helper Features
+
+Before we start, this application utilizes the appearance of Text and Buttons in order to accomplish it's automation. this can easily be brokem by changes to the software from the application developers. If something breaks it will require an update from me. A good example of this is Connectcare Themes. VU Office Helper requires the Default theme to work correctly.
+
+Image CDs inserted into CD Drive will automatically load the viewer, and ejecting the CD will prevent frozen windows
+Prevention of timed logout in Centricity and PatientKeeper - 
+	Works smartly to stay out of your way. Updates every 4 minutes if you are not using keyboard/mouse, forces update every 8 minutes even if you are active
+Quickkey access to most commonly used applications. These options are avaiable by hotkey below, but are also options when clicking the VU trayicon.
+	CapsLock-V = Centricty (think VU)
+	CapsLock-C = Connectcare
+	CapsLock-H = Hcare (PatientKeeper)
+	CapsLock-Y = Synapse
+	CapsLock-N = NCCN
+	CapsLock-S = Search Current patient in another system
+	CapsLock-K = Kill locked windows. Sometime applications/windows lock and cannot be close in the traditional ways. Hitting this hotkey shows a special cursor and clicking the close button on the frozen window will force-kill it. Escape exits this mode.
+	CapsLock-G = Search Google for the currently Highlighted Text
+
+Smart Escape Key in Centricity
+	Update>Chart>>Documents>Chart Desktop>>Summary>Chart>>Documents>Update
+Search in Connectcare with patient data of currently opened patient in Centricity
+	this only works if a patient chart is open in Centricity. I scrape the demographics from the banner, Parse the diffents parts such as Lastname, Firstname, DOB and switch to Connecare to paste in the data, and open there chart there. this represents a significant time savings.
+Search Centricty with patient data of currently opened chart in Connectcare
+Serach Centricity with pateitn data of currently opened chart in PatientKeeper
+Close All Apps, and Logoff 
+
+If VU Patient Keeper is doing something weird and interfering with what you neeed to to, just toggle the Pause button to put it to Sleep.
+Scrolllock toggles showdesktop (minimizes everything)
