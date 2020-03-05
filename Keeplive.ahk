@@ -65,6 +65,9 @@ OnMessage(0x404, "AHK_NOTIFYICON") 										; for left click Tray
 ;##                                                               TODO                                                                         ##
 ;########################################################################
 ; Redmask
+; check keeplive beep inside known open CC and/or pk
+; hide cen schedulig intermediate window.
+; username add special menu items for admin
 ; fix includeOR in escape - run regex
 ; Waitfindtext not shwoing comment on polling I accept
 ; autoclocik OK for reminder CC
@@ -80,10 +83,21 @@ OnMessage(0x404, "AHK_NOTIFYICON") 										; for left click Tray
 ; Clarify Logging
 ; Help File
 ;Autoupdate
+; OK CC MSG
+/*
+Hyperspace - edc
+
+*/
 ;########################################################################
 return
 
+F9::
+
+return
+
 F8::
+
+
 	ccTitles := ["Hyperspace - RI UROLOGY","Hyperspace - edc","Citrix XenApp - Applications","Citrix XenApp - Applications","Citrix XenApp - Applications","Citrix XenApp - Applications","Bon Secours","Bon Secours"]
 	ccTexts := ["","","https://access.bshsi.org/XenAppRemote/site/default.aspx","https://access.bshsi.org/XenAppRemote/site/default.aspx?CTX_CurrentFolder=%5cConnectCare%5cPROD","https://access.bshsi.org/XenAppRemote/site/default.aspx?CTX_CurrentFolder=%5cConnectCare","https://access.bshsi.org/XenAppRemote/site/default.aspx?CTX_CurrentFolder=%5c","https://access.bshsi.org/cgi/login",	"https://access.bshsi.org/cgi/login","https://access.bshsi.org/vpn/index.html"]
 	
@@ -116,6 +130,9 @@ POLLING: ;----------------------------------------------------------------------
 	
 	If WinExist("Practice Solution 12")
 		WinHide, Practice Solution 12 ; Hide the Useless Centricity Window
+	
+	If WinExist("Centricity Practice Solution -") ; Hide minimizes, Kill mostly Useless Centricity Window
+		WinKill, Centricity Practice Solution -
 	
 	If WinActive("Security Alert","In the future`, do not show this warning") {
 		Send, ~i{Tab 2}{Enter}
@@ -355,7 +372,7 @@ if (testing) {
 if (elapsed > forceevery) || (A_TimeIdle > idleevery) || (A_ThisLabel  = "#Pause")
 {
 	;RedMask(true)
-	if (elapsed > forceevery) { ; sound beep and pause before overtaking user
+	if ((elapsed > forceevery) && (WinExist(cctitle) || WinExist(pktitle))) { ; sound beep and pause before overtaking user
 		SoundBeep
 		Sleep, 1000
 	}
@@ -471,6 +488,11 @@ Menu, Tray,Add, Synapse (Hyper-Y), SYNAPSE
 Menu, Tray,Add, &HCare (Hyper-H), HCARE
 Menu, Tray,Add, &NCCN (Hyper-N), NCCN
 Menu, Tray,Add
+if (A_UserName == "srhamy") {
+	
+
+	Menu, Tray, Add
+}
 Menu, Tray,Add, Restart %AppName% (Hold Escape), RESTART
 Menu, Tray,Add, Startup Work Apps (Hyper-L), STARTUPAPPS
 Menu, Tray,Add, Close All/LogOff, CloseLogOff

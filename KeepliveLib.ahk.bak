@@ -78,7 +78,7 @@ Escape(Text, includeOR := false) {
     Text := RegExReplace(Text, "\x22", "\x22")	 					; Convert " \x22 
     Text := RegExReplace(Text, "([$?+*(){}^\\\[\].])", "\$1") 	; add needed escape backslash
 	if includeOR
-		Text := RegExReplace(text, "(|)", "\$1") 						; optional escape |
+		Text := RegExReplace(text, "[|]", "\$1") 						; optional escape |
 	Text := RegExReplace(Text, "\x27", "\x27")						; Convert ' to \x27
     Text := RegExReplace(Text, "`a)\r?\n", "\n")						; all linefeed variants to \n
 return text
@@ -311,7 +311,7 @@ return false
 return
 
 +^s:: ; Easy window details to clipboard . 
-;SetTitleMatchMode, Slow
+SetTitleMatchMode, Slow
 WinGetActiveStats, Title, Width, Height, X, Y
 WinGetClass, Class , Title
 WinGet, Hwnd, ID, A
@@ -326,11 +326,50 @@ WinGet, ControlListHwnd,ControlListHwnd, A
 StringReplace,ControlListHwnd, ControlListHwnd, `n, |, A
 MouseGetPos, cX, cY
 PixelGetColor, Color, %cX%, %cY%
-Traytip,Window Info Srubbed,This info has been placed on the clipboard as well,10
-Text = Title: %Title%`r`nStatusBar Text: %SBText%`r`nHwnd: %HWnd%`r`nPID: %PID%`r`nName: %Name%`r`nPath: %Path%`r`nWindow X: %X%`r`nWindow Y: %Y%`r`nWindow H: %Height%`r`nWindow W: %Width%`r`nColor at X%cX%/Y%cY%: %Color%`r`nControls Class: %ControlList%`r`nControls Hwnd: %ControlListHwnd%`r`nWindow Text: =================================================`r`n%Text%`r`n==============================
+SetTitleMatchMode, fast
+Traytip,Window Info Scrubbed,This info has been placed on the clipboard as well,10
+Text = Title: %Title%`r`nStatusBar Text: %SBText%`r`nHwnd: %HWnd%`r`nPID: %PID%`r`nName: %Name%`r`nPath: %Path%`r`nWindow X: %X%`r`nWindow Y: %Y%`r`nWindow H: %Height%`r`nWindow W: %Width%`r`nColor at cusror X%cX%/Y%cY%: %Color%`r`nControls Class: %ControlList%`r`nControls Hwnd: %ControlListHwnd%`r`nWindow Text: ==============================================`r`n%Text%`r`n==============================================
 Clipboard = %Text%
-MsgBox, %Text%
+msgbox, 4, Window Results, Show Results in Notepad?, 4
+IfMsgBox, Yes
+	gosub, notepad
+else
+	MsgBox, %Text%
 return
+
+notepad:
+	Run, Notepad.exe
+	WinWaitActive, Notepad, , 3
+	If WinActive("Notepad")
+		Send, ^v
+return
+
+FullUserName(username := "") {
+Try {
+	if not username
+		username := A_UserName
+	objConnection := ComObjCreate("ADODB.Connection")
+	objCommand := ComObjCreate("ADODB.Command")
+	objRecordset := ComObjCreate("ADODB.Recordset")
+	strDomain := ComObjGet("LDAP://rootDSE").Get("defaultNamingContext")
+	objConnection.Open("Provider=ADsDSOObject;")
+	objCommand.ActiveConnection := objConnection
+	fieldList := "givenName,sn,displayName,SAMAccountName,mail,telephoneNumber,department,st,employeeID"
+	objCommand.CommandText := "SELECT " fieldList " From 'LDAP://" strDomain "' WHERE samAccountType='805306368'"
+	objRecordset := objCommand.Execute()
+	Loop
+		{
+			if (objRecordset.eof)
+				break
+			if objRecordset.Fields("SAMAccountName").value = username{
+				return % objRecordset.Fields("givenName").value  " " objRecordset.Fields("sn").value
+				break
+			}
+		objRecordset.MoveNext()
+		}
+}
+return
+}
 
 AHK_NOTIFYICON(wParam, lParam) ; for LeftClick access to TrayMenu
 {

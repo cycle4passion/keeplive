@@ -311,7 +311,7 @@ return false
 return
 
 +^s:: ; Easy window details to clipboard . 
-;SetTitleMatchMode, Slow
+SetTitleMatchMode, Slow
 WinGetActiveStats, Title, Width, Height, X, Y
 WinGetClass, Class , Title
 WinGet, Hwnd, ID, A
@@ -326,10 +326,22 @@ WinGet, ControlListHwnd,ControlListHwnd, A
 StringReplace,ControlListHwnd, ControlListHwnd, `n, |, A
 MouseGetPos, cX, cY
 PixelGetColor, Color, %cX%, %cY%
-Traytip,Window Info Srubbed,This info has been placed on the clipboard as well,10
-Text = Title: %Title%`r`nStatusBar Text: %SBText%`r`nHwnd: %HWnd%`r`nPID: %PID%`r`nName: %Name%`r`nPath: %Path%`r`nWindow X: %X%`r`nWindow Y: %Y%`r`nWindow H: %Height%`r`nWindow W: %Width%`r`nColor at X%cX%/Y%cY%: %Color%`r`nControls Class: %ControlList%`r`nControls Hwnd: %ControlListHwnd%`r`nWindow Text: =================================================`r`n%Text%`r`n==============================
+SetTitleMatchMode, fast
+Traytip,Window Info Scrubbed,This info has been placed on the clipboard as well,10
+Text = Title: %Title%`r`nStatusBar Text: %SBText%`r`nHwnd: %HWnd%`r`nPID: %PID%`r`nName: %Name%`r`nPath: %Path%`r`nWindow X: %X%`r`nWindow Y: %Y%`r`nWindow H: %Height%`r`nWindow W: %Width%`r`nColor at cusror X%cX%/Y%cY%: %Color%`r`nControls Class: %ControlList%`r`nControls Hwnd: %ControlListHwnd%`r`nWindow Text: ==============================================`r`n%Text%`r`n==============================================
 Clipboard = %Text%
-MsgBox, %Text%
+msgbox, 4, Window Results, Show Results in Notepad?, 4
+IfMsgBox, Yes
+	gosub, notepad
+else
+	MsgBox, %Text%
+return
+
+notepad:
+	Run, Notepad.exe
+	WinWaitActive, Notepad, , 3
+	If WinActive("Notepad")
+		Send, ^v
 return
 
 AHK_NOTIFYICON(wParam, lParam) ; for LeftClick access to TrayMenu
