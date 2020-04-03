@@ -18,10 +18,11 @@ SetTitleMatchMode, RegEx    	; I always use Regex for everything
 ;########################################################################
 global AppName							:= SubStr(A_ScriptName,1,-4)
 global AppVersion						:= 0.92
-global DropBoxVersionPath		:= "https://www.dropbox.com/s/z185mxpw4jq91k1/Version.txt?dl=1"
-global DropBoxRepoPath			:= "https://www.dropbox.com/s/uoowdiuftw6957j/Matrix.exe?dl=1"
-global DropBoxRepoChanges		:= "https://www.dropbox.com/s/rke6p68bg6prwoh/ChangeLog.txt?dl=1"
+global GitHubVersionPath			:= "https://raw.githubusercontent.com/cycle4passion/keeplive/master/Version.txt"
+global GitHubRepoPath				:= "https://github.com/cycle4passion/keeplive/blob/master/Keeplive.exe"
+global GitHubRepoChanges		:= "https://raw.githubusercontent.com/cycle4passion/keeplive/master/ChangeLog.txt"
 global idleevery							:= 1000*60*4		; refreshed every 4 minutes if inactive
+global forceevery							:= 1000*60*8		; forces refresh every 8 minute even if active
 global forceevery							:= 1000*60*8		; forces refresh every 8 minute even if active
 global starttime							:= A_TickCount
 global centitle								:= "Update|Chart"
@@ -42,15 +43,17 @@ global nccntitle							:= "NCCN|www.nccn.org"
 global nccnurl								:= "https://www.nccn.org/store/Login/Login.aspx"
 global syntitle								:= "http://synapse|http://pacs"
 global synurl								:= "http://synapse/explore.asp"
+global LocationDone					:= false
 global testing								:=  Not A_IsCompiled
 ;########################################################################
 ;##                                                          AUTOEXEC                                                                       ##
 ;########################################################################
 gosub, HOTKEYREG
 gosub, RESETMODIFIERS
+;gosub, LOADLOCATION
 gosub, TRAYMENU
 gosub, SEARCHMENU
-IfGreater, A_IsCompiled, 0, SetTimer, POLLING, % (1000 * 3)  		; Polling for Popups every 3 seconds
+SetTimer, POLLING, % (1000 * 3)  													; Polling for Popups every 3 seconds
 SetTimer, KeepLive, % (1000 * 60 * 1)    											; Keeplive checks every minute
 OnMessage(0x219, "WM_DEVICECHANGE") 									; for removables
 OnMessage(0x404, "AHK_NOTIFYICON") 										; for left click Tray
@@ -64,35 +67,29 @@ OnMessage(0x404, "AHK_NOTIFYICON") 										; for left click Tray
 ;########################################################################
 ;##                                                               TODO                                                                         ##
 ;########################################################################
+; Escape on Docs click update but does not stay open?
+; BSIAccept Terms - acting odd, click sometimes, not others, submitting?
+; markdown for  synapse anomoly alrert 426742
+; http://synapse/explore.asp?path=/All%20Patients&filter=internalPatientUID=641274
+; No reading profile found for display.
+; site names from registry?
+; HCA DO not ask again o nthis device fails
 ; Redmask
+; Esc does not maximize centricity
 ; check keeplive beep inside known open CC and/or pk
-; hide cen schedulig intermediate window.
+; implement go2
 ; username add special menu items for admin
-; fix includeOR in escape - run regex
+; Test autoupdate
+; Help as Markdown/GitHub
 ; Waitfindtext not shwoing comment on polling I accept
 ; autoclocik OK for reminder CC
 ; polling getting maximized instead of checked
-; connectcare opening homepage defaulted focus, other tab an't firing polling to clear alert
-; fix I accept terms connectcare
-/* The insert button isn't used very often. Check it out next to the delete button. It's native functionality, when triggered, is to allow you to type text, and any text after the cursor is typed over instead of advanced. When running VU Keeplive application, this button is reprogrammed to Append selected text to clipboard. An example would be text in a PDF where you want to copy multiple parts. Highlight one and hit append, highlight another and hit append. When you paste the serially copied elements are then pasted from the clipboard. 
-*/
 ; Keeplive not reverting to cencrity - worked with Chart open
-; HCare LOGGED OUT, GO TO LOGIN? DONE ALREADY?
 ; Hcare to Cen?
 ; Fix closeall
 ; Clarify Logging
-; Help File
-;Autoupdate
-; OK CC MSG
-/*
-Hyperspace - edc
-
-*/
+; OK CC MSG - Hyperspace - edc , cehck OK if active
 ;########################################################################
-return
-
-F9::
-
 return
 
 F8::
@@ -112,7 +109,7 @@ F8::
 return
 
 STARTUPAPPS: ;------------------------------------------------------------------------------
-	TrayTip(AppName, "Auto-Loading...")
+	TrayTip(AppName, "Auto-Loading...Please be patient!")
 	Gosub, Synapse
 	Gosub, HCare
 	Gosub, Connectcare
@@ -122,8 +119,44 @@ return ; End STARTUPAPPS -------------------------------------------------------
 
 POLLING: ;------------------------------------------------------------------------------------
 ; Polling not live on testing because it prevents debug of everything else
-
+	if testing
+		return
 	; Centricity --------------------------------------------------------------------------------
+	; Login
+	if WinWaitCitrix("Centricity Practice Solution",0,656,429) {
+		Send, %A_Username%{Tab}
+		 start := A_TickCount
+		while (WinWaitCitrix("Centricity Practice Solution",0,656,429) && FindText(412-150000, 345-150000, 412+150000, 345+150000, 0, 0, "|<LocOfCareBlank>**50$69.0000000Tzzzs000000200000000000E00007U0000200000kT0000E000046800020000tskTQwkE0005Y40P8a200004UUDFw0E0000Y63+8020000gUlnFUkE000743vu7a200000000000E0000000000200000000000E0000000000200000000000E0000000000200000000000E0000000000200000000000Tzzzw")) {
+			sleep, 100
+			if Floor((A_TickCount - start)/1000) > 20
+				return
+		}
+		if (WaitFindText(655-150000, 578-150000, 655+150000, 578+150000, 0, 0,"|<LocOfCare>*145$68.000000A000000Y00041s0000800010W000nbnbUQwE7CQE4Z548Y40+8YD9FF2910SXs4GIIEWEE8cU14Z548Y2++87TDCF1l0SyVtU","Centricity Practice Solution",1,0,0,50)) {
+			RegRead, location, HKLM, SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\State\Machine, Site-Name
+			if (location = "Emporia")
+				locationindex = 1
+			else if (location = "Hanover")
+				locationindex = 2
+			else if (location = "MensWell")
+				locationindex = 3
+			else if (location = "PrinceGeorge")
+				locationindex = 4
+			else if (location = "Reynolds")
+				locationindex = 5
+			else if (location = "SPASC")
+				locationindex = 6
+			else if(location = "StonyPoint")
+				locationindex = 7
+			else if(location = "Tappahanock")
+				locationindex = 8
+			if (locationindex) {
+				keys := "{PgUp}{Down " . locationindex . "}{Tab}"
+				Send, %keys%				
+			}
+		}
+		return
+	}
+
 	if WinActive("End Update") {  ; note 0.03 tolerance need to handle not unchecking, comma 0 only tries once
 		WaitFindText(848-150000, 676-150000, 848+150000, 676+150000, 0.3, 0,"|<CenSignClinListChanges>*161$71.0000000000000000zzU000000001011t00000002024E000000040484xs70000808Q+OEH0000E0E6IoUU0000U0U6dd100001012BHG280002027mSY3U00040400800000080803k000000E0E000000000zzU00000000000000004","End Update",1,0)
 	}
@@ -131,16 +164,19 @@ POLLING: ;----------------------------------------------------------------------
 	If WinExist("Practice Solution 12")
 		WinHide, Practice Solution 12 ; Hide the Useless Centricity Window
 	
-	If WinExist("Centricity Practice Solution -") ; Hide minimizes, Kill mostly Useless Centricity Window
-		WinKill, Centricity Practice Solution -
+	; ? killing open centricity
+	;If WinExist("Centricity Practice Solution -") ; Hide minimizes, Kill this mostly Useless Centricity Window
+	;	WinKill, Centricity Practice Solution -
 	
 	If WinActive("Security Alert","In the future`, do not show this warning") {
 		Send, ~i{Tab 2}{Enter}
 	}
 	
-	;if WinActive("Security Alert","?")
+	;if WinActive("Security Alert","?") {
 	;	ControlClick, Yes, Security Alert ; NOT SURE THIS IS WORKING
 	;}
+	
+	
 	
 	If WinActive("Synapse", "Save changes to")
 		Send, {Enter}
@@ -150,13 +186,18 @@ POLLING: ;----------------------------------------------------------------------
 		Send, {Enter} ; ControlClick, Button1 Fails for OK, no Alt option
 	}
 	
+	If WinActive (" Synapse Anomaly Alert") {
+		Send, {Tab}{Space}{Tab}{Return}
+	}
+	
 	; Connectcare -------------------------------------------------------------------------------
 	If WinActive (Escape("Workspace Limit Reached - \\Remote"))
 		Send, {Enter}
 	
 	If WinActive ("Bon Secours", Escape("https://access.bshsi.org/vpn/index.html"))
-		WaitFindText(625-150000, 490-150000, 625+150000, 490+150000, 0.1, 0,"|<BSIAcceptTerms>*171$71.00007zw000000000808000000000E0E000000000U0U600000001010A00000002020MSQt00004040kZCQ00008081Vu4A0000E0E36Itk0000U0U67bCE0001010000000002020000000007zw00001","Bon Secours",1,0)
-	
+		WaitFindText(711-150000, 630-150000, 711+150000, 630+150000, 0.1, 0,"|<BSIAcceptTerms>*168$69.zzU00000000404000000000U0U000000004040E0000450U0U200000Vc4040EQtnriDtU0U24odmmVhw040ETX7qIBDU0U24odkmVdw040Eytnra7BU0U00000k00404000006000zzU000000004","Bon Secours",1,0,0,-30)
+	; BSIAccept Terms - acting odd, click sometimes, not others, submitting?
+
 	If WinActive("Assign Me") { ; Connectcare
 		Send, Consulting Provider{Tab}!A
 	}
@@ -429,7 +470,7 @@ $Escape:: ; $ keeps Send, {Escape} from triggering this
 	If (ErrorLevel = 1)
 		gosub, RESTART
 	if WinActive("Centricity Practice Solution Browser") {
-		WinClose, Centricity Practive Solution Browser
+		WinKill, Centricity Practive Solution Browser
 		UpdateExist(true)	
 	} else if WinActive("Update") { ; if update is open, go to patient Chart>Documents
 		Send, {Escape}
@@ -445,7 +486,7 @@ $Escape:: ; $ keeps Send, {Escape} from triggering this
 		gosub, CenSummary
 	} else { ; send through Esc to other apps; try to default back to Centricity
 		Send, {Escape}
-		Winactivate, %centitle%  ; default back to centiricty if running
+		gosub, Centricity  ; default back to centiricty if running
 	}
 return
 
@@ -489,8 +530,8 @@ Menu, Tray,Add, &HCare (Hyper-H), HCARE
 Menu, Tray,Add, &NCCN (Hyper-N), NCCN
 Menu, Tray,Add
 if (A_UserName == "srhamy") {
-	
-
+	Menu, Tray, Add, &Force Online Application Update, FORCEUPDATE
+	Menu, Tray, Add, Check/Perform Online Application Update, UPDATE
 	Menu, Tray, Add
 }
 Menu, Tray,Add, Restart %AppName% (Hold Escape), RESTART
@@ -592,13 +633,23 @@ SynapseSearch: ; ---------------------------------------------------------
 return
 
 NCCN: ; ------------------------------------------------------------------
-	if Not WinExist(nccntitle)
-		TrayTip("NCNN Credentials:", "Login:`t`tcancer@uro.com`r`nPassword:`turology",30,1)
-	Go(nccntitle,nccnurl)
+	nccn := Go(nccntitle,nccnurl)
+	COMDOM(nccn, "txtEmail", "cancer@uro.com")
+	COMDOM(nccn, "txtPassword", "urology ")
+	COMDOM(nccn, "blnRemember", "check")
+	COMDOM(nccn, "btnLogin", "click")
 return
 
 Google: ; ----------------------------------------------------------------
 	Go("","http://www.google.com/#&q=" . BetterCopy()) ; empty first parmater forces new search window
+return
+
+FORCEUPDATE:
+	Update(true)
+return
+
+UPDATE:
+	Update()
 return
 
 CLOSELOGOFF:  ;------------------------------------------------------------------------------

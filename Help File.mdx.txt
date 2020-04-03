@@ -1,0 +1,73 @@
+VU Keeplive
+
+Each time the app is run, it checks for and auto-update for new versions. It also will indicate to you any changes that were implemented. 
+
+The main purpose of this so application is to facilitate efficiency of patient care within the office. Currently, we all are fighting against multi-step two-factor auntehmtication, timed auto-logouts, pop ups, and repetarive entering demographics to lookup patient data. This represents a significant is time sink. How about the idea of logging into each system once and it remains active until the end of the office and instantly activating applications by a hot key? How about automatic transfer of demographic data from Centricity to Connectcare or PatientKeeper or the vice versa? The process of looking up historic data becomes effort free. I also included a few more perks. CDs of patient images autoload and if you eject with the viewer app still running, the viewer is auto-closed instead of locking up. Clicks add up and I am on a mission to speed you up. If you have any ideas let me know. FYI, I have made the decision to not do auto logins. 
+
+I think it is useful to understand how this program is working in order to understand that it is not 100% reliable. If it is failing in a specific function consistently, this will help in troubleshooting the fix.  Where applicable, this program works by checking available window titles, buttons, checkboxes, etc. unfortunately most of the VU helper interactions are within Citrix served apps. You can think of this as the app (like Connectcare) running on a remote server and being presented to you as a graphic representation of the window where mouse movements, clicks and keypresses are relayed to the remote server application. From the perspective of Vu helper I have significantly less window data over which to recognize and natively control. Most of VU helpers control of Citrix app interactions are based on image recognition and forced mouse movement/clicks. Something as simple as an application update or user change of a personalized theme can easily break image recognition and functionality. A good example of this is that Connectcare must have the default theme in order to function correctly. 
+
+Once logged in to outside EMRs like BS Connectcare and/or HCA PatientKeeper, the VU helper will stay out of your way as determined by mouse and keyboard activity and when it’s determined you are inactive it will interact every 3 minutes with the outside EMRS to prevent times logouts. If you active for too long, every 8 minutes VU helper will beep to warn you to allow forced interaction to prevent logouts. 
+
+Many applications have built in hotkeys. In order that I don’t interfere with these, VU Helper uses it’d own special Hyper-key. It is extending the functionality of the caps-lock key. Native caps lock toggle functionality is maintained, but combinations like hyper-v (for VU) takes you to VU Centricity. A comprehensive list follows.  Go ahead and memorize these. 
+
+Hyper-v or Escape (for VU Centricity)
+Hyper-b (for BS Connectcare)
+Hyper-h (for HCA PatientKeeper)
+Hyper-l (for initiate Logins) is q
+Hyper-n (for NCCN)
+Hyper-s (for show Search options)
+Hyper-g (for Google search selected text)
+Hyper-x (for Synapse Xrays)
+
+No matter where you are at, the escape key always takes you to Centricity and if available, the currently open patient update. 
+
+In my opinion, the best feature of VU Helper is linking patient lookup between the 3 EMRs we use. 
+
+To set the stage, let’s assume we have a patients chart open in Centricity and we want to search in Connectcare.  The patients demographics are available in the Centricity banner. Hyper-s brings up the search menu. Pressing C identifies you wish to search in Connectcare. VU helper takes over and quickly copies the demographics and parses it into last name, first name, and date of birth. It switches to connectcare, navigates to the search screen, drops in demographic data, hits search, selects the first patient, and navigates you to the results tab. I have no idea how many clicks and keypresses this saves but easily 50! The reverse also works from Connectcare or Patient keeper to Centricity. 
+
+Within Centricity itself escape functions in a smart manner. 
+
+1. Update is showing, escape takes you to Patients Chart tab and Documents list. Natively In this situation escape minimizes the update however underlying Centricity app does not always show and may not be on the chart/documents tab. This is used to quickly review historic data. (Saves 3 or 4 clicks).
+2. Chart tab is active with Update already open/available. Escape takes you back to update. For example after looking through historic visits. (Saves 1 to 2 clicks). 
+3. Chart is active but no update open/available (like after signing update). Escape takes you Chart Documents tab and Summary list ready to pick the next patient. (Saves 1 to 2 clicks).
+4. A scanned document is active. Escape takes you back to open update if available. (Saves 2 clicks). 
+
+Other Centricity benefits
+
+- auto population of login screen VU location. 
+- Auto check of sign update’s “Sign clinical list changes”
+
+Specific to Hyper-b for BS Connectcare. 
+
+- Auto accepts terms on login
+- Auto clicks OK to close/bypass the sign-in message. 
+- Auto closes pop up “Workspace Limit Reached” to allow opening up another new patient
+- Auto declares you as consulting provider when adding a patient to your list. 
+
+
+## HCA PatientKeeper
+Specific to hyper-h for HCA PatientKeeper
+
+- auto check of remember this computer
+
+Specific to Hyper-x for Synapse Xrays
+
+- Auto close monitor warnings 
+- Auto saving of image markup
+
+Specific to Hyper
+
+A couple of extra perks. 
+
+Print screen button normally places a copy of the entire screen on the clipboard. I changed it so that it allows you to highlight and scrape a portion of the screen to the clipboard. Personally, I use this to drop in NCCN guidelines into the text of a note and carry it over from visit to visit. 
+
+The insert button natively allows you toggle on/off typeover of text in front of the cursor. Not really that useful. I changed it to an “append to clipboard” functionality. I use this to copy multiple selections of data to the clipboard and then paste the entire sequence into the encounter in the standard manner. 
+
+Pause will temporarily disable VU helper. The icon changes to red indicating the app is paused. This is useful if something weird is happening and not allowing you to accomplish what you want. The app is reenabled by hitting pause again. 
+
+Lastly, on a rare basis VU helper can hang. If so holding escape for 2 seconds will restart it fresh. 
+
+
+
+
+

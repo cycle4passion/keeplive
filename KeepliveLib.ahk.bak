@@ -1,5 +1,39 @@
 ; KeepLive Library
 
+COMDOM(pwb, pElem, pAction :="", getby :="id") { ; 4/1/20  ----------------------------------------
+try {
+	 StringLower, pElem, pElem
+	 StringLower, pAction, pAction
+	 if (getby = "name") ; same as getElementsByName, COMDOM(wb, "tag[0]","username","focus")
+        target := pWb.document.getElementsByName(pElem)
+	else ; assume getby ID
+        target := pWb.document.getElementByID(pElem)
+	if not target
+		return
+	if target.disabled := true
+		target.disabled := false  ; Force through disabled controls
+    ; ACTION =======================================================
+    if (pAction = "exist") {
+      return target 
+	} else if (pAction = "value") {
+		return target.value
+	} else if (pAction="click") {
+        target.Click()
+        IEWaitReady(pwb)
+    } else if (pAction = "focus") {
+		target.Focus()
+	} else if (pAction = "submit") {
+          target.Submit()
+          IEWaitReady(pWb)
+	} else if (pAction == "check" or action == "uncheck") {
+        if (target.type = "checkbox")
+          target.checked := (pAction=="check") ? true : false
+	} else ; simply set value
+        target.value := pAction
+	return target
+}
+} ; End COMDOM =======================================================
+
 Go(Title,URL,Text := "") {
 	if WinExist(Title,Text) && Title {
 		WinActivate, %Title%, %Text%
@@ -17,7 +51,7 @@ Go(Title,URL,Text := "") {
 		WinMaximize, %Title%
 		PostMessage, 0x112, 0xF030,,, %Title%, 
 	}
-return
+return wb
 }
 
 Go2(texts, titles := "") {
@@ -46,7 +80,7 @@ Go2(texts, titles := "") {
 	} else { ; forceful maximize
 		PostMessage, 0x112, 0xF030,,, ahk_id %found%
 	}
-return
+return wb
 }
 
 IEWaitReady(wb, timeout:=10, extrawait :=0) {
@@ -344,6 +378,59 @@ notepad:
 		Send, ^v
 return
 
+Update(force:=false) {
+	global AppVersion
+	global AppName
+	global GitHubVersionPath
+	global GitHubRepoPath
+	global GitHubRepoChanges
+	Try {
+		whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+		whr.Open("GET", GitHubVersionPath, true)
+		whr.Send()
+		whr.WaitForResponse()
+		AvailVersion := whr.ResponseText
+		if !AvailVersion {
+			msgbox, Error Checking for %AppName% Update
+			return
+		}
+		if (AvailVersion >= AppVersion || force) {
+			whr.Open("GET", GitHubRepoChanges, true)
+			whr.Send()
+			whr.WaitForResponse()
+			Changes := whr.ResponseText
+			msgbox %AvailVersion% Version of %AppName% is Available`r`n`r`n%Changes%`r`nPlease be patient for Update...
+			UrlDownloadToFile, %GitHubRepoPath%, Temp%A_ScriptName%
+			BatchFile=
+			/*
+			Because you cannot delete or rename a currently running file, Design a batch file to: 
+			ping to give time for this script to exit
+			delete version 1 (prior version)
+			rename version 2 to version 1 (new version) ; note cannot include drive/path for target
+			run the new version
+			delete the batch file
+			*/
+			(
+			Ping 127.0.0.1
+			Del %A_ScriptFullPath%
+            Rename %A_ScriptDir%\Temp%A_ScriptName% %A_ScriptName%
+			%A_ScriptFullPath%
+			Del Update.bat
+			)
+
+			IfExist, Update.bat
+				FileDelete,Update.bat ; Housecleaning possible priors
+			FileAppend,%BatchFile%,Update.bat ; Create the bat
+			MsgBox, You are now up to date on Version %AvailVersion%...Please wait for Restart ; Alert the user that the app will be down for a few seconds
+            Run, Update.bat,,hide ;Run it (hidden)
+            ExitApp
+		} else {
+			msgbox,,%AppName%, %AppName% App is Up To Date`r`nVersion %AppVersion%
+		}
+	}
+return
+}
+
 FullUserName(username := "") {
 Try {
 	if not username
@@ -370,6 +457,23 @@ Try {
 }
 return
 }
+
+CHECKWORKSTATION() { ; ---------------------------------------------------------------------
+	bit 		:= (A_Is64bitOS) ? ("- 64 bit") : ("- 32 bit")
+;	os 		:= RegExReplace(StringLower(A_OSVersion,"T"),"_", " ")
+	mag 	:= (A_ScreenDPI=140) ? "144 dpi (150%)" : (A_ScreenDPI=110) ? "120 dpi (125%)" : (A_ScreenDPI=96) ? "96 dpi (100%)" : %A_ScreenDPI% dpi (Custom)
+	if Not InStr(A_OSVersion ,requiredos)
+		MsgBox, 262192, WorkStation Operating System, This application is written to interface with Windows 7 - 64 bit. Elements may fail/crash running via %os%%bit%
+	if (A_ScreenWidth != requiredxres or A_ScreenHeight  != requiredyres)
+		MsgBox, 262192, Workstation Resolution Settings, This application relies heavily on image searching`, For this to work accurately, screen resolution is very important. `n`nCurrent your resolution is set at %A_ScreenWidth% x %A_ScreenHeight% with DPI %A_ScreenDPI% and the application is expecting 1024 x 1280 with DPI of 96. `n`nYou should change it in Control Panel > Display > Screen Resolution. `n
+	if (A_ScreenDPI  != requireddpi)
+		MsgBox, 262192, Workstation Magnification Settings, This application relies heavily on image searching`, For this to work accurately, Maginifcation settings are very important. `n`nCurrent DPI is set to %mag%. `n`nYou should change it in Control Panel > Display > Make Text Larger/Smaller vs Custom Sizing Options. `n
+	if (A_ScreenWidth != requiredxres or A_ScreenHeight  != requiredyres or A_ScreenDPI  != requireddpi) {
+		Run control desk.cpl`,`,3
+		WinActivate Display Properties
+	  }
+} ; End CHECKWORKSTATION------------------------------------------------------------
+
 
 AHK_NOTIFYICON(wParam, lParam) ; for LeftClick access to TrayMenu
 {
